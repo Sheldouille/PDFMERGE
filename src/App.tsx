@@ -112,10 +112,6 @@ export default function App() {
     <div className="app">
       <header className="app__header">
         <h1>Merge PDF</h1>
-        <p className="app__subtitle">
-          Merge, reorder and sort your PDFs — 100% in your browser, no file
-          is ever sent to a server.
-        </p>
       </header>
 
       <main className="app__main">
@@ -216,10 +212,6 @@ export default function App() {
           </section>
         )}
       </main>
-
-      <footer className="app__footer">
-        <span>Standalone app — works offline, no data is ever transmitted.</span>
-      </footer>
     </div>
   );
 }
