@@ -69,7 +69,7 @@ export function PageGrid({ pages, onReorder, onRemove }: PageGridProps) {
           <button
             type="button"
             className="page-card__remove"
-            title="Retirer cette page"
+            title="Remove this page"
             onClick={(e) => {
               e.stopPropagation();
               onRemove(page.id);

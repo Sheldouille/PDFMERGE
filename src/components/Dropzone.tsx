@@ -58,9 +58,9 @@ export function Dropzone({ onFiles, busy }: DropzoneProps) {
       />
       <div className="dropzone__icon">📄</div>
       <p className="dropzone__title">
-        {busy ? "Chargement…" : "Glissez vos fichiers PDF ici"}
+        {busy ? "Loading…" : "Drag your PDF files here"}
       </p>
-      <p className="dropzone__hint">ou cliquez pour parcourir vos fichiers</p>
+      <p className="dropzone__hint">or click to browse your files</p>
     </div>
   );
 }

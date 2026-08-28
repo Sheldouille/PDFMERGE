@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import "./App.css";
 import { Dropzone } from "./components/Dropzone";
 import { PageGrid } from "./components/PageGrid";
+import { detectCommonBaseName, sanitizeFileName } from "./utils/filename";
 import { naturalCompare } from "./utils/naturalSort";
 import { loadPdfEntry, mergePdfs } from "./utils/pdf";
 import type { PageItem, PdfFileEntry } from "./types";
@@ -13,9 +14,16 @@ export default function App() {
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [customName, setCustomName] = useState<string | null>(null);
 
   const fileCount = files.length;
   const pageCount = pages.length;
+
+  const suggestedName = useMemo(
+    () => (fileCount > 0 ? detectCommonBaseName(files.map((f) => f.name)) : ""),
+    [files, fileCount],
+  );
+  const outputName = fileCount > 0 ? (customName ?? suggestedName) : "";
 
   const handleFiles = async (newFiles: File[]) => {
     setError(null);
@@ -29,9 +37,7 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
-      setError(
-        "Impossible de lire un des fichiers. Vérifiez qu'il s'agit bien d'un PDF valide.",
-      );
+      setError("Couldn't read one of the files. Make sure it's a valid PDF.");
     } finally {
       setLoading(false);
     }
@@ -73,6 +79,7 @@ export default function App() {
     setPages([]);
     setError(null);
     setResultUrl(null);
+    setCustomName(null);
   };
 
   const handleMerge = async () => {
@@ -88,7 +95,7 @@ export default function App() {
       setResultUrl(url);
     } catch (err) {
       console.error(err);
-      setError("La fusion a échoué. Réessayez ou vérifiez vos fichiers.");
+      setError("Merge failed. Please try again or check your files.");
     } finally {
       setMerging(false);
     }
@@ -99,13 +106,15 @@ export default function App() {
     [files],
   );
 
+  const downloadName = `${sanitizeFileName(outputName || "merged")}.pdf`;
+
   return (
     <div className="app">
       <header className="app__header">
-        <h1>Fusion PDF</h1>
+        <h1>Merge PDF</h1>
         <p className="app__subtitle">
-          Fusionnez, réorganisez et triez vos PDF — 100&nbsp;% dans votre
-          navigateur, aucun fichier n'est envoyé sur un serveur.
+          Merge, reorder and sort your PDFs — 100% in your browser, no file
+          is ever sent to a server.
         </p>
       </header>
 
@@ -117,7 +126,7 @@ export default function App() {
         {fileCount > 0 && (
           <section className="toolbar">
             <div className="toolbar__info">
-              <strong>{fileCount}</strong> fichier{fileCount > 1 ? "s" : ""} ·{" "}
+              <strong>{fileCount}</strong> file{fileCount > 1 ? "s" : ""} ·{" "}
               <strong>{pageCount}</strong> page{pageCount > 1 ? "s" : ""}
             </div>
             <div className="toolbar__actions">
@@ -126,12 +135,12 @@ export default function App() {
                 className="btn btn--ghost"
                 onClick={handleAutoSort}
                 disabled={fileCount < 2}
-                title="Trie les fichiers automatiquement selon les numéros ou motifs détectés dans leur nom"
+                title="Sort files automatically based on numbers or patterns detected in their name"
               >
-                🔍 Trier par nom de fichier
+                🔍 Sort by filename
               </button>
               <button type="button" className="btn btn--ghost" onClick={handleReset}>
-                Tout effacer
+                Clear all
               </button>
             </div>
           </section>
@@ -146,7 +155,7 @@ export default function App() {
                 <button
                   type="button"
                   className="filelist__remove"
-                  title="Retirer ce fichier"
+                  title="Remove this file"
                   onClick={() => handleRemoveFile(f.id)}
                 >
                   ×
@@ -159,8 +168,8 @@ export default function App() {
         {pages.length > 0 && (
           <>
             <p className="hint">
-              Glissez-déposez les pages ci-dessous pour changer leur ordre
-              dans le document final.
+              Drag and drop the pages below to change their order in the
+              final document.
             </p>
             <PageGrid
               pages={pages}
@@ -172,29 +181,44 @@ export default function App() {
 
         {pages.length > 0 && (
           <section className="mergebar">
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={handleMerge}
-              disabled={merging}
-            >
-              {merging ? "Fusion en cours…" : "Fusionner les PDF"}
-            </button>
-            {resultUrl && (
-              <a
-                className="btn btn--success"
-                href={resultUrl}
-                download="fusion.pdf"
+            <label className="outputname">
+              <span className="outputname__label">Output file name</span>
+              <span className="outputname__field">
+                <input
+                  type="text"
+                  className="outputname__input"
+                  value={outputName}
+                  placeholder="merged"
+                  onChange={(e) => setCustomName(e.target.value)}
+                />
+                <span className="outputname__ext">.pdf</span>
+              </span>
+            </label>
+            <div className="mergebar__actions">
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={handleMerge}
+                disabled={merging}
               >
-                ⬇ Télécharger fusion.pdf
-              </a>
-            )}
+                {merging ? "Merging…" : "Merge PDFs"}
+              </button>
+              {resultUrl && (
+                <a
+                  className="btn btn--success"
+                  href={resultUrl}
+                  download={downloadName}
+                >
+                  ⬇ Download {downloadName}
+                </a>
+              )}
+            </div>
           </section>
         )}
       </main>
 
       <footer className="app__footer">
-        <span>Application autonome — fonctionne hors-ligne, aucune donnée transmise.</span>
+        <span>Standalone app — works offline, no data is ever transmitted.</span>
       </footer>
     </div>
   );
